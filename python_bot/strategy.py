@@ -23,7 +23,6 @@ class MarketAnalyst:
 
     def identificar_ciclo(self) -> str:
         if len(self.topos) < 2 or len(self.fundos) < 2:
-            Logger.info("Ciclo identificado como NEUTRO (dados insuficientes)")
             return MarketCycle.NEUTRO
 
         _, topo1 = self.topos[-2]
@@ -137,7 +136,6 @@ class MarketAnalyst:
             cursor = conn.cursor()
             cursor.execute("SELECT 1 FROM sinais WHERE id_sinal = ?", (sinal['id_sinal'],))
             if cursor.fetchone():
-                Logger.aviso(f"{sinal['simbolo']}: sinal duplicado ({sinal['id_sinal']})")
                 return
 
             cursor.execute("""
@@ -149,4 +147,3 @@ class MarketAnalyst:
                 sinal['adx'], sinal['corpo_pct'], sinal['lote'], sinal['timestamp']
             ))
             conn.commit()
-            Logger.info(f"{sinal['simbolo']}: sinal salvo no banco ({sinal['id_sinal']})")
