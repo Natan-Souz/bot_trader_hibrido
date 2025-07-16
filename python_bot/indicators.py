@@ -77,3 +77,22 @@ class IndicatorCalculator:
                     fundos.append((df.index[i], centro['low']))
 
         return topos, fundos
+    
+    @staticmethod
+    def calcular_adx(df: pd.DataFrame, period: int = 14) -> pd.DataFrame:
+        df = df.copy()
+        df['TR'] = np.maximum(df['high'] - df['low'],
+                              np.maximum(abs(df['high'] - df['close'].shift(1)), abs(df['low'] - df['close'].shift(1))))
+
+        df['+DM'] = np.where((df['high'] - df['high'].shift(1)) > (df['low'].shift(1) - df['low']),
+                             np.maximum(df['high'] - df['high'].shift(1), 0), 0)
+        df['-DM'] = np.where((df['low'].shift(1) - df['low']) > (df['high'] - df['high'].shift(1)),
+                             np.maximum(df['low'].shift(1) - df['low'], 0), 0)
+
+        df['TR_smooth'] = df['TR'].rolling(window=period).sum()
+        df['+DI'] = 100 * (df['+DM'].rolling(window=period).sum() / df['TR_smooth'])
+        df['-DI'] = 100 * (df['-DM'].rolling(window=period).sum() / df['TR_smooth'])
+        df['DX'] = 100 * (abs(df['+DI'] - df['-DI']) / (df['+DI'] + df['-DI']))
+        df['ADX'] = df['DX'].rolling(window=period).mean()
+
+        return df[['+DI', '-DI', 'ADX']]
