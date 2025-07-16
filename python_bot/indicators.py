@@ -1,5 +1,5 @@
 import pandas as pd 
-import numpy
+import numpy as np
 
 class IndicatorCalculator:
 
@@ -53,3 +53,27 @@ class IndicatorCalculator:
             df.at[i, 'vwap_semanal'] = soma_tpv_semana / soma_vol_semana if soma_vol_semana > 0 else np.nan
 
         return df[['vwap_diaria', 'vwap_semanal']]
+    
+    @staticmethod
+    def detectar_pivos(df: pd.DataFrame, janela: int = 500, grupo_candles: int = 3, distancia_minima: float = 0.001):
+        df = df.tail(janela).copy()
+        topos, fundos = [], []
+        n = grupo_candles
+
+        for i in range(n, len(df) - n):
+            segmento = df.iloc[i - n:i + n + 1]
+            centro = df.iloc[i]
+
+            if centro['high'] == segmento['high'].max():
+                anterior = df.iloc[i - 1]['high']
+                proximo = df.iloc[i + 1]['high']
+                if centro['high'] - max(anterior, proximo) >= distancia_minima:
+                    topos.append((df.index[i], centro['high']))
+
+            if centro['low'] == segmento['low'].min():
+                anterior = df.iloc[i - 1]['low']
+                proximo = df.iloc[i + 1]['low']
+                if min(anterior, proximo) - centro['low'] >= distancia_minima:
+                    fundos.append((df.index[i], centro['low']))
+
+        return topos, fundos
