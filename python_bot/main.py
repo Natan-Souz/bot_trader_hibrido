@@ -1,80 +1,121 @@
+import time
 from datetime import datetime, timedelta
-import os
 import MetaTrader5 as mt5
+import pandas as pd
 
 from symbol_manager import SymbolManager
 from strategy import MarketAnalyst
-from signal_generator import obter_candles, obter_ativos_observados
 from market_scanner import MarketScanner, ScannerConfig
 
+# ================================
+# 🔧 CONFIGURAÇÕES DE ENTRADA
+# ================================
 
-CAMINHO_ULTIMA_CHECAGEM = "data/ultima_checagem.txt"
+QTD_FOREX   = 2
+QTD_INDICES = 0
+QTD_CRYPTO  = 10
+QTD_ACOES  = 0
+SPREAD_MAX  = 50
+INTERVALO_SCANNER = timedelta(hours=1)
+INTERVALO_ESTRATEGIA = timedelta(minutes=5)
+N_CANDLES_ANALISE = 200
+N_CANDLES_CICLO = 100
 
+# ================================
+# 📥 OBTENÇÃO DE DADOS
+# ================================
 
-def deve_executar_market_scanner():
-    if not os.path.exists(CAMINHO_ULTIMA_CHECAGEM):
-        return True
+def obter_candles(simbolo: str, timeframe: int, n_barras: int) -> pd.DataFrame:
+    mt5.initialize()
+    rates = mt5.copy_rates_from_pos(simbolo, timeframe, 0, n_barras)
+    if rates is None or len(rates) == 0:
+        return pd.DataFrame()
+    df = pd.DataFrame(rates)
+    df['time'] = pd.to_datetime(df['time'], unit='s')
+    df.set_index('time', inplace=True)
+    return df
 
-    with open(CAMINHO_ULTIMA_CHECAGEM, "r") as f:
-        conteudo = f.read().strip()
-        try:
-            ultima = datetime.fromisoformat(conteudo)
-            return datetime.now() - ultima > timedelta(minutes=30)
-        except Exception:
-            return True
+# ================================
+# 🔍 EXECUÇÃO DO MARKET SCANNER
+# ================================
 
+def executar_market_scanner():
+    print("🔍 Executando market scanner...")
+    config = ScannerConfig(
+        max_forex=QTD_FOREX,
+        max_indices=QTD_INDICES,
+        max_crypto=QTD_CRYPTO,
+        max_acoes = QTD_ACOES,
+        spread_maximo=SPREAD_MAX
+    )
+    scanner = MarketScanner(config)
+    scanner.carregar_dados_mt5()
+    scanner.salvar_no_banco()
+    print("📊 Market scanner finalizado.")
 
-def atualizar_ultima_checagem():
-    with open(CAMINHO_ULTIMA_CHECAGEM, "w") as f:
-        f.write(datetime.now().isoformat())
+# ================================
+# 🤖 EXECUÇÃO DAS ESTRATÉGIAS
+# ================================
 
+def executar_estrategias():
+    print("📈 Executando geração de sinais...")
 
-def executar_fluxo():
-    print("🚀 Iniciando geração de sinais...")
-
-    if not mt5.initialize():
-        print("❌ Falha ao iniciar o MetaTrader 5")
-        return
-
-    # Etapa 1: Scanner de mercado (a cada 30 min)
-    if deve_executar_market_scanner():
-        print("🔍 Executando market scanner...")
-        scanner = MarketScanner(ScannerConfig())
-        scanner.carregar_dados_mt5()
-        scanner.salvar_no_banco()
-        atualizar_ultima_checagem()
-        print("📊 Market scanner finalizado.")
-
-    # Etapa 2: Geração de sinais
     symbol_manager = SymbolManager()
     symbol_manager.carregar_do_banco()
+    ativos_config = list(symbol_manager.simbolos.values())
 
-    ativos = obter_ativos_observados()
+    for config in ativos_config:
+        try:
+            simbolo = config.simbolo
+            print(f"\n🧠 Processando ativo: {simbolo}")
 
-    for simbolo in ativos:
-        config = symbol_manager.obter_configuracao(simbolo)
-        if not config:
-            print(f"⚠️ Configuração ausente para {simbolo}")
-            continue
+            df_principal = obter_candles(simbolo, config.timeframe, N_CANDLES_ANALISE)
+            df_ciclo = obter_candles(simbolo, config.timeframe_ciclo, N_CANDLES_CICLO)
 
-        df = obter_candles(simbolo, config.timeframe, barras=500)
-        df_ciclo = obter_candles(simbolo, config.timeframe_ciclo, barras=1000)
+            if df_principal.empty:
+                print(f"⚠️ Sem candles principais para {simbolo}")
+                continue
 
-        if df.empty or df_ciclo.empty:
-            print(f"⚠️ Dados insuficientes para {simbolo}")
-            continue
+            if df_ciclo.empty:
+                print(f"⚠️ Sem candles de ciclo para {simbolo}")
+                continue
 
-        analista = MarketAnalyst(df, df_ciclo, simbolo)
-        sinal = analista.gerar_sinal_detalhado(config, datetime.now().time())
+            analista = MarketAnalyst(df_principal, df_ciclo, simbolo)
+            sinal = analista.gerar_sinal_detalhado(config, datetime.now().time())
 
-        if sinal:
-            print(f"✅ Sinal gerado para {simbolo}")
-        else:
-            print(f"🕵️ Nenhum sinal para {simbolo}")
+            if sinal:
+                print(f"✅ Sinal gerado para {simbolo}: {sinal['direcao']} @ {sinal['preco_entrada']}")
+            else:
+                print(f"ℹ️ Sem sinal gerado para {simbolo}")
 
-    mt5.shutdown()
-    print("🏁 Geração de sinais finalizada.")
+        except Exception as e:
+            print(f"❌ Erro ao processar {config.simbolo}: {e}")
 
+    print("\n🏁 Geração de sinais finalizada.")
+
+# ================================
+# 🚀 EXECUÇÃO PRINCIPAL
+# ================================
 
 if __name__ == "__main__":
-    executar_fluxo()
+
+    proxima_execucao_scanner = datetime.now()
+    ultima_execucao_estrategia = datetime.now() - INTERVALO_ESTRATEGIA
+
+    try:
+        while True:
+            agora = datetime.now()
+
+            if agora >= proxima_execucao_scanner:
+                executar_market_scanner()
+                proxima_execucao_scanner = agora + INTERVALO_SCANNER
+
+            if agora - ultima_execucao_estrategia >= INTERVALO_ESTRATEGIA:
+                executar_estrategias()
+                ultima_execucao_estrategia = agora
+
+            time.sleep(5)
+
+    finally:
+        mt5.shutdown()
+        print("🛑 Conexão com MetaTrader 5 encerrada.")

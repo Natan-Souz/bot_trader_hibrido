@@ -36,8 +36,8 @@ def executar_geracao_sinais():
         if not config:
             continue
 
-        df = obter_candles(simbolo, config.timeframe, barras=500)
-        df_ciclo = obter_candles(simbolo, config.timeframe_ciclo, barras=1000)
+        df = obter_candles(simbolo, config.timeframe, barras=200)
+        df_ciclo = obter_candles(simbolo, config.timeframe_ciclo, barras=200)
 
         if df.empty or df_ciclo.empty:
             continue
