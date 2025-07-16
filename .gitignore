@@ -1,0 +1,17 @@
+# Bytecode Python
+__pycache__/
+*.pyc
+
+# Arquivos do MetaEditor
+*.ex5
+*.mq5~
+
+# Banco de dados e dados temporários
+data/*.sqlite
+*.csv
+
+# Logs
+logs/
+
+# Configs locais
+*.json
