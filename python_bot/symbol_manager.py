@@ -4,7 +4,7 @@ import MetaTrader5 as mt5
 
 
 class SymbolConfig:
-    def __init__(self, simbolo, lote, adx_min, horario_inicio, horario_fim, tipo, volume_ajustado, ponto):
+    def __init__(self, simbolo, lote, adx_min, horario_inicio, horario_fim, tipo, volume_ajustado, ponto, engolfo_pct_max=2.5):
         self.simbolo = simbolo
         self.lote = lote
         self.adx_min = adx_min
@@ -13,6 +13,7 @@ class SymbolConfig:
         self.tipo = tipo
         self.volume_ajustado = volume_ajustado
         self.ponto = ponto
+        self.engolfo_pct_max = engolfo_pct_max
         self.timeframe = mt5.TIMEFRAME_M5         # Timeframe principal de operação
         self.timeframe_ciclo = mt5.TIMEFRAME_H1   # Timeframe para identificar o ciclo
 
@@ -49,7 +50,8 @@ class SymbolManager:
                     horario_fim=datetime.strptime("17:00", "%H:%M").time(),
                     tipo=tipo,
                     volume_ajustado=float(volume),
-                    ponto=ponto
+                    ponto=ponto,
+                    engolfo_pct_max=2.5
                 )
                 self.adicionar_simbolo(config)
 
