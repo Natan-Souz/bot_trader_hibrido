@@ -15,6 +15,7 @@ logs/
 
 # Configs locais
 *.json
+*.env
 
 #Ambiente virtual
 .venv/
