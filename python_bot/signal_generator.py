@@ -5,8 +5,11 @@ import MetaTrader5 as mt5
 
 from strategy import MarketAnalyst
 from symbol_manager import SymbolManager
+from logger import Logger
 
-def obter_ativos_observados(banco_path: str = "C:\\Users\\walte\\AppData\\Roaming\\MetaQuotes\\Terminal\\D0E8209F77C8CF37AD8BF550E51FF075\\MQL5\\Files\\sinais.sqlite") -> list:
+Logger.configurar()
+
+def obter_ativos_observados(banco_path: str = "C:\\Users\\Natan\\AppData\\Roaming\\MetaQuotes\\Terminal\\D0E8209F77C8CF37AD8BF550E51FF075\\MQL5\\Files\\sinais.sqlite") -> list:
     conn = sqlite3.connect(banco_path)
     cursor = conn.cursor()
     cursor.execute("SELECT simbolo FROM ativos WHERE observando = 1")
@@ -46,9 +49,9 @@ def executar_geracao_sinais():
         sinal = analista.gerar_sinal_detalhado(config, datetime.now().time())
 
         if sinal:
-            print.info(f"{simbolo}: sinal gerado com sucesso")
+            Logger.info(f"{simbolo}: sinal gerado com sucesso")
         else:
-            print.info(f"{simbolo}: nenhum sinal gerado")
+            Logger.info(f"{simbolo}: nenhum sinal gerado")
 
     mt5.shutdown()
 

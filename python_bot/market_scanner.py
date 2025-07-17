@@ -5,6 +5,10 @@ from dataclasses import dataclass
 import MetaTrader5 as mt5
 import pandas as pd
 
+from logger import Logger
+
+Logger.configurar()
+
 
 @dataclass
 class ScannerConfig:
@@ -13,7 +17,7 @@ class ScannerConfig:
     max_crypto: int = 2
     max_acoes: int = 0
     spread_maximo: float = 40.0
-    caminho_banco: str = "C:\\Users\\walte\\AppData\\Roaming\\MetaQuotes\\Terminal\\D0E8209F77C8CF37AD8BF550E51FF075\\MQL5\\Files\\sinais.sqlite" #ajustar posteriormente para o caminho APPDATA
+    caminho_banco: str = "C:\\Users\\Natan\\AppData\\Roaming\\MetaQuotes\\Terminal\\D0E8209F77C8CF37AD8BF550E51FF075\\MQL5\\Files\\sinais.sqlite" #ajustar posteriormente para o caminho APPDATA
 
 
 def calcular_volume_ajustado(simbolo: str, n_barras: int = 100) -> float:
@@ -106,7 +110,7 @@ class MarketScanner:
 
         conn.commit()
         conn.close()
-        print("✅ Ativos observados atualizados com dados completos no banco.")
+        Logger.info("✅ Ativos observados atualizados com dados completos no banco.")
 
 
 if __name__ == "__main__":

@@ -15,7 +15,7 @@ class SymbolConfig:
         self.ponto = ponto
         self.engolfo_pct_max = engolfo_pct_max
         self.timeframe = mt5.TIMEFRAME_M5         # Timeframe principal de operação
-        self.timeframe_ciclo = mt5.TIMEFRAME_H1   # Timeframe para identificar o ciclo
+        self.timeframe_ciclo = mt5.TIMEFRAME_M30  # Timeframe para identificar o ciclo
 
 
 class SymbolManager:
@@ -28,7 +28,7 @@ class SymbolManager:
     def obter_configuracao(self, simbolo: str) -> SymbolConfig:
         return self.simbolos.get(simbolo, None)
 
-    def carregar_do_banco(self, caminho_banco='C:\\Users\\walte\\AppData\\Roaming\\MetaQuotes\\Terminal\\D0E8209F77C8CF37AD8BF550E51FF075\\MQL5\\Files\\sinais.sqlite'):
+    def carregar_do_banco(self, caminho_banco='C:\\Users\\Natan\\AppData\\Roaming\\MetaQuotes\\Terminal\\D0E8209F77C8CF37AD8BF550E51FF075\\MQL5\\Files\\sinais.sqlite'):
         conn = sqlite3.connect(caminho_banco)
         cursor = conn.cursor()
 
@@ -46,8 +46,8 @@ class SymbolManager:
                     simbolo=simbolo,
                     lote=0.01,
                     adx_min=20,
-                    horario_inicio=datetime.strptime("03:00", "%H:%M").time(),
-                    horario_fim=datetime.strptime("17:00", "%H:%M").time(),
+                    horario_inicio=datetime.strptime("00:00", "%H:%M").time(),
+                    horario_fim=datetime.strptime("23:59", "%H:%M").time(),
                     tipo=tipo,
                     volume_ajustado=float(volume),
                     ponto=ponto,

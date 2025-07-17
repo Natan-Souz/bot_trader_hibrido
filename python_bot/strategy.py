@@ -1,8 +1,11 @@
 import sqlite3
 from datetime import datetime, timedelta
 import pandas as pd
-from indicators import IndicatorCalculator
 
+from indicators import IndicatorCalculator
+from logger import Logger
+
+Logger.configurar()
 
 class MarketCycle:
     BULL = 'bull'
@@ -15,16 +18,16 @@ class MarketAnalyst:
         self.simbolo = simbolo
         self.df = df
         self.df_ciclo = df_ciclo
-        self.db_path = "C:\\Users\\walte\\AppData\\Roaming\\MetaQuotes\\Terminal\\D0E8209F77C8CF37AD8BF550E51FF075\\MQL5\\Files\\sinais.sqlite"
+        self.db_path = "C:\\Users\\Natan\\AppData\\Roaming\\MetaQuotes\\Terminal\\D0E8209F77C8CF37AD8BF550E51FF075\\MQL5\\Files\\sinais.sqlite"
 
         self.adx_data = IndicatorCalculator.calcular_adx(df)
         self.vwap_df = IndicatorCalculator.calcular_vwap(df)
         self.vwap_diaria = self.vwap_df['vwap_diaria']
-        self.topos, self.fundos = IndicatorCalculator.detectar_pivos(df_ciclo)
+        self.topos, self.fundos = IndicatorCalculator.detectar_pivos(df_ciclo, janela=500, grupo_candles=3, distancia_minima=0.0005)
 
     def identificar_ciclo(self) -> str:
         if len(self.topos) < 3 or len(self.fundos) < 3:
-            print("⏳ Dados insuficientes para identificar ciclo.")
+            Logger.info("⏳ Dados insuficientes para identificar ciclo.")
             return MarketCycle.NEUTRO
 
         _, topo1 = self.topos[-3]
@@ -35,14 +38,19 @@ class MarketAnalyst:
         _, fundo2 = self.fundos[-2]
         _, fundo3 = self.fundos[-1]
 
-        if topo1 < topo2 < topo3 and fundo1 < fundo2 < fundo3:
-            print("📈 Ciclo de alta confirmado (3 topos e 3 fundos ascendentes)")
-            return MarketCycle.BULL
-        elif topo1 > topo2 > topo3 and fundo1 > fundo2 > fundo3:
-            print("📉 Ciclo de baixa confirmado (3 topos e 3 fundos descendentes)")
+        if topo1 < topo2 < topo3:
+            if fundo1 < fundo2 < fundo3:
+                Logger.info("📈 Ciclo de alta confirmado (3 topos e 3 fundos ascendentes)")
+                return MarketCycle.BULL
+            elif fundo2 < topo3:
+                Logger.info("📈 Estrutura de alta em formação (topos ascendentes e fundo2 < topo3)")
+                return MarketCycle.BULL
+
+        if topo1 > topo2 > topo3 and fundo1 > fundo2 > fundo3:
+            Logger.info("📉 Ciclo de baixa confirmado (3 topos e 3 fundos descendentes)")
             return MarketCycle.BEAR
 
-        print("🔄 Movimento lateral ou indefinido")
+        Logger.info("🔄 Movimento lateral ou indefinido")
         return MarketCycle.NEUTRO
 
     def _sinal_repetido(self, direcao: str, horas: int = 1) -> bool:
@@ -95,22 +103,27 @@ class MarketAnalyst:
 
         # Filtro de horário
         if not (config.horario_inicio <= horario_atual <= config.horario_fim):
+            Logger.aviso("Fora de horario de operação")
             return {}
 
         # Filtro de ADX
         if 20 < adx < config.adx_min:
+            Logger.aviso("ADX sem força | ADX: {adx}")
             return {}
 
         # Filtro de corpo
         candle_atual = self.df.iloc[-1]
         corpo_pct = abs(candle_atual['close'] - candle_atual['open']) / candle_atual['open'] * 100
         if corpo_pct > config.engolfo_pct_max:
+            Logger.aviso("Anomalia no mercado (engolfo forte)")
+
             return {}
 
         # Filtro de distância VWAP
         preco = candle_atual['close']
         vwap = self.vwap_diaria.iloc[-1]
-        if abs(preco - vwap) / vwap > 0.002:
+        if abs(preco - vwap) / vwap > 0.005:
+            Logger.aviso("Preço distante da VWAP | Preço: {preco} | VWAP: {vwap}")
             return {}
 
         # Direção baseada no ciclo

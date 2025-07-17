@@ -6,20 +6,23 @@ import pandas as pd
 from symbol_manager import SymbolManager
 from strategy import MarketAnalyst
 from market_scanner import MarketScanner, ScannerConfig
+from logger import Logger
+
+Logger.configurar()
 
 # ================================
 # 🔧 CONFIGURAÇÕES DE ENTRADA
 # ================================
 
-QTD_FOREX   = 2
-QTD_INDICES = 0
+QTD_FOREX   = 5
+QTD_INDICES = 3
 QTD_CRYPTO  = 5
-QTD_ACOES  = 5
-SPREAD_MAX  = 50
+QTD_ACOES  = 0
+SPREAD_MAX  = 30
 INTERVALO_SCANNER = timedelta(hours=1)
 INTERVALO_ESTRATEGIA = timedelta(minutes=2)
-N_CANDLES_ANALISE = 200
-N_CANDLES_CICLO = 100
+N_CANDLES_ANALISE = 300
+N_CANDLES_CICLO = 500
 
 # ================================
 # 📥 OBTENÇÃO DE DADOS
@@ -40,7 +43,7 @@ def obter_candles(simbolo: str, timeframe: int, n_barras: int) -> pd.DataFrame:
 # ================================
 
 def executar_market_scanner():
-    print("🔍 Executando market scanner...")
+    Logger.info("🔍 Iniciando Market Scanner...")
     config = ScannerConfig(
         max_forex=QTD_FOREX,
         max_indices=QTD_INDICES,
@@ -51,14 +54,14 @@ def executar_market_scanner():
     scanner = MarketScanner(config)
     scanner.carregar_dados_mt5()
     scanner.salvar_no_banco()
-    print("📊 Market scanner finalizado.")
+    Logger.info("📊 Finalizando Market Scanner.")
 
 # ================================
 # 🤖 EXECUÇÃO DAS ESTRATÉGIAS
 # ================================
 
 def executar_estrategias():
-    print("📈 Executando geração de sinais...")
+    Logger.info("📈 Iniciando geração de sinais...")
 
     symbol_manager = SymbolManager()
     symbol_manager.carregar_do_banco()
@@ -67,31 +70,31 @@ def executar_estrategias():
     for config in ativos_config:
         try:
             simbolo = config.simbolo
-            print(f"\n🧠 Processando ativo: {simbolo}")
+            Logger.info(f"🧠 Analisando ativo: {simbolo}")
 
             df_principal = obter_candles(simbolo, config.timeframe, N_CANDLES_ANALISE)
             df_ciclo = obter_candles(simbolo, config.timeframe_ciclo, N_CANDLES_CICLO)
 
             if df_principal.empty:
-                print(f"⚠️ Sem candles principais para {simbolo}")
+                Logger.aviso(f"⚠️ Dados insuficientes (candles principais) para {simbolo}")
                 continue
 
             if df_ciclo.empty:
-                print(f"⚠️ Sem candles de ciclo para {simbolo}")
+                Logger.aviso(f"⚠️ Dados insuficientes (candles de ciclo) para {simbolo}")
                 continue
 
             analista = MarketAnalyst(df_principal, df_ciclo, simbolo)
             sinal = analista.gerar_sinal_detalhado(config, datetime.now().time())
 
             if sinal:
-                print(f"✅ Sinal gerado para {simbolo}: {sinal['direcao']} @ {sinal['preco_entrada']}")
+                Logger.info(f"✅ Sinal gerado para {simbolo}: {sinal['direcao']} @ {sinal['preco_entrada']}")
             else:
-                print(f"ℹ️ Sem sinal gerado para {simbolo}")
+                Logger.info(f"ℹ️ Nenhum sinal gerado para {simbolo}")
 
         except Exception as e:
-            print(f"❌ Erro ao processar {config.simbolo}: {e}")
+            Logger.erro(f"❌ Erro ao processar {simbolo}: {e}")
 
-    print("\n🏁 Geração de sinais finalizada.")
+    Logger.info("🏁 Geração de sinais concluída.")
 
 # ================================
 # 🚀 EXECUÇÃO PRINCIPAL
@@ -118,4 +121,4 @@ if __name__ == "__main__":
 
     finally:
         mt5.shutdown()
-        print("🛑 Conexão com MetaTrader 5 encerrada.")
+        Logger.aviso("🛑 Conexão com MetaTrader 5 encerrada.")
