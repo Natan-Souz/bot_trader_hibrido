@@ -14,11 +14,11 @@ Logger.configurar()
 # 🔧 CONFIGURAÇÕES DE ENTRADA
 # ================================
 
-QTD_FOREX   = 5
-QTD_INDICES = 3
-QTD_CRYPTO  = 5
+QTD_FOREX   = 2
+QTD_INDICES = 0
+QTD_CRYPTO  = 13
 QTD_ACOES  = 0
-SPREAD_MAX  = 30
+SPREAD_MAX  = 40
 INTERVALO_SCANNER = timedelta(hours=1)
 INTERVALO_ESTRATEGIA = timedelta(minutes=2)
 N_CANDLES_ANALISE = 300

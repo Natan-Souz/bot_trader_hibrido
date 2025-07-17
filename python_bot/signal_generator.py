@@ -6,10 +6,11 @@ import MetaTrader5 as mt5
 from strategy import MarketAnalyst
 from symbol_manager import SymbolManager
 from logger import Logger
+from config import DB_PATH
 
 Logger.configurar()
 
-def obter_ativos_observados(banco_path: str = "C:\\Users\\Natan\\AppData\\Roaming\\MetaQuotes\\Terminal\\D0E8209F77C8CF37AD8BF550E51FF075\\MQL5\\Files\\sinais.sqlite") -> list:
+def obter_ativos_observados(banco_path: str = DB_PATH) -> list:
     conn = sqlite3.connect(banco_path)
     cursor = conn.cursor()
     cursor.execute("SELECT simbolo FROM ativos WHERE observando = 1")

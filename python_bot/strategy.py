@@ -4,6 +4,7 @@ import pandas as pd
 
 from indicators import IndicatorCalculator
 from logger import Logger
+from config import DB_PATH
 
 Logger.configurar()
 
@@ -18,7 +19,7 @@ class MarketAnalyst:
         self.simbolo = simbolo
         self.df = df
         self.df_ciclo = df_ciclo
-        self.db_path = "C:\\Users\\Natan\\AppData\\Roaming\\MetaQuotes\\Terminal\\D0E8209F77C8CF37AD8BF550E51FF075\\MQL5\\Files\\sinais.sqlite"
+        self.db_path = DB_PATH
 
         self.adx_data = IndicatorCalculator.calcular_adx(df)
         self.vwap_df = IndicatorCalculator.calcular_vwap(df)

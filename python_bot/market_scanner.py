@@ -6,6 +6,7 @@ import MetaTrader5 as mt5
 import pandas as pd
 
 from logger import Logger
+from config import DB_PATH
 
 Logger.configurar()
 
@@ -17,7 +18,7 @@ class ScannerConfig:
     max_crypto: int = 2
     max_acoes: int = 0
     spread_maximo: float = 40.0
-    caminho_banco: str = "C:\\Users\\Natan\\AppData\\Roaming\\MetaQuotes\\Terminal\\D0E8209F77C8CF37AD8BF550E51FF075\\MQL5\\Files\\sinais.sqlite" #ajustar posteriormente para o caminho APPDATA
+    caminho_banco: str = DB_PATH
 
 
 def calcular_volume_ajustado(simbolo: str, n_barras: int = 100) -> float:
