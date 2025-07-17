@@ -13,11 +13,11 @@ from market_scanner import MarketScanner, ScannerConfig
 
 QTD_FOREX   = 2
 QTD_INDICES = 0
-QTD_CRYPTO  = 10
-QTD_ACOES  = 0
+QTD_CRYPTO  = 5
+QTD_ACOES  = 5
 SPREAD_MAX  = 50
 INTERVALO_SCANNER = timedelta(hours=1)
-INTERVALO_ESTRATEGIA = timedelta(minutes=5)
+INTERVALO_ESTRATEGIA = timedelta(minutes=2)
 N_CANDLES_ANALISE = 200
 N_CANDLES_CICLO = 100
 

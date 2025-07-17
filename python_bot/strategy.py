@@ -15,7 +15,7 @@ class MarketAnalyst:
         self.simbolo = simbolo
         self.df = df
         self.df_ciclo = df_ciclo
-        self.db_path = "data/sinais.sqlite"
+        self.db_path = "C:\\Users\\walte\\AppData\\Roaming\\MetaQuotes\\Terminal\\D0E8209F77C8CF37AD8BF550E51FF075\\MQL5\\Files\\sinais.sqlite"
 
         self.adx_data = IndicatorCalculator.calcular_adx(df)
         self.vwap_df = IndicatorCalculator.calcular_vwap(df)
@@ -23,18 +23,26 @@ class MarketAnalyst:
         self.topos, self.fundos = IndicatorCalculator.detectar_pivos(df_ciclo)
 
     def identificar_ciclo(self) -> str:
-        if len(self.topos) < 2 or len(self.fundos) < 2:
+        if len(self.topos) < 3 or len(self.fundos) < 3:
+            print("⏳ Dados insuficientes para identificar ciclo.")
             return MarketCycle.NEUTRO
 
-        _, topo1 = self.topos[-2]
-        _, topo2 = self.topos[-1]
-        _, fundo1 = self.fundos[-2]
-        _, fundo2 = self.fundos[-1]
+        _, topo1 = self.topos[-3]
+        _, topo2 = self.topos[-2]
+        _, topo3 = self.topos[-1]
 
-        if topo2 > topo1 and fundo2 > fundo1:
+        _, fundo1 = self.fundos[-3]
+        _, fundo2 = self.fundos[-2]
+        _, fundo3 = self.fundos[-1]
+
+        if topo1 < topo2 < topo3 and fundo1 < fundo2 < fundo3:
+            print("📈 Ciclo de alta confirmado (3 topos e 3 fundos ascendentes)")
             return MarketCycle.BULL
-        elif topo2 < topo1 and fundo2 < fundo1:
+        elif topo1 > topo2 > topo3 and fundo1 > fundo2 > fundo3:
+            print("📉 Ciclo de baixa confirmado (3 topos e 3 fundos descendentes)")
             return MarketCycle.BEAR
+
+        print("🔄 Movimento lateral ou indefinido")
         return MarketCycle.NEUTRO
 
     def _sinal_repetido(self, direcao: str, horas: int = 1) -> bool:

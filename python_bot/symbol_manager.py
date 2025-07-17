@@ -28,7 +28,7 @@ class SymbolManager:
     def obter_configuracao(self, simbolo: str) -> SymbolConfig:
         return self.simbolos.get(simbolo, None)
 
-    def carregar_do_banco(self, caminho_banco='data/sinais.sqlite'):
+    def carregar_do_banco(self, caminho_banco='C:\\Users\\walte\\AppData\\Roaming\\MetaQuotes\\Terminal\\D0E8209F77C8CF37AD8BF550E51FF075\\MQL5\\Files\\sinais.sqlite'):
         conn = sqlite3.connect(caminho_banco)
         cursor = conn.cursor()
 
