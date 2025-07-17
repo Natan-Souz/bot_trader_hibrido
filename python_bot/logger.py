@@ -11,25 +11,35 @@ class Logger:
         data_hoje = datetime.now().strftime("%Y-%m-%d")
         nome_arquivo = f"logs/{nome_base}_{data_hoje}.log"
 
-        logging.basicConfig(
-            filename=nome_arquivo,
-            level=logging.INFO,
-            format="%(asctime)s [%(levelname)s] %(message)s",
+        # Cria logger manualmente
+        logger = logging.getLogger()
+        logger.setLevel(logging.INFO)
+
+        # Remove handlers antigos para evitar duplicidade
+        for handler in logger.handlers[:]:
+            logger.removeHandler(handler)
+
+        # Cria handler com codificação UTF-8
+        handler = logging.FileHandler(nome_arquivo, encoding='utf-8')
+        formatter = logging.Formatter(
+            fmt="%(asctime)s [%(levelname)s] %(message)s",
             datefmt="%Y-%m-%d %H:%M:%S"
         )
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
     
     @staticmethod
-    def info(msg:str):
+    def info(msg: str):
         logging.info(msg)
 
     @staticmethod
     def erro(msg: str):
         logging.error(msg)
-    
+
     @staticmethod
     def aviso(msg: str):
         logging.warning(msg)
-    
+
     @staticmethod
     def registrar_sinal_processado(sinal: dict, status: str):
         if not os.path.exists("logs"):
